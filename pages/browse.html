@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Browse — Reelify</title>
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <a href="../index.html" class="nav-logo">Reelify</a>
+    <ul class="nav-links">
+      <li><a href="browse.html">Browse</a></li>
+      <li><a href="favorites.html">Favorites</a></li>
+      <li><a href="watched.html">Watched</a></li>
+    </ul>
+    <button class="nav-toggle" aria-label="Toggle menu">&#9776;</button>
+  </nav>
+
+  <!-- Page Header -->
+  <header class="page-header">
+    <h1>Browse Movies</h1>
+    <div class="search-bar">
+      <input type="text" id="search-input" placeholder="Search movies..." aria-label="Search movies" />
+    </div>
+    <div id="genre-filters" class="genre-filters"></div>
+  </header>
+
+  <!-- Movie Grid -->
+  <main>
+    <div id="movie-grid" class="movie-grid"></div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>&copy; 2026 Reelify. Powered by <a href="https://www.themoviedb.org" target="_blank" rel="noopener noreferrer">TMDB</a>.</p>
+  </footer>
+
+  <script src="../js/app.js"></script>
+  <script type="module">
+    import { fetchPopularMovies, fetchGenres, searchMovies, fetchMoviesByGenre } from '../js/api.js';
+    import { renderMovies } from '../js/movies.js';
+
+    const grid         = document.getElementById('movie-grid');
+    const searchInput  = document.getElementById('search-input');
+    const genreFilters = document.getElementById('genre-filters');
+
+    let genres        = [];
+    let activeGenreId = null;
+    let searchTimeout = null;
+    let currentSearch = 0;
+
+    function renderGenreButtons() {
+      const all = document.createElement('button');
+      all.textContent = 'All';
+      all.className = 'genre-btn active';
+      all.addEventListener('click', () => selectGenre(null, all));
+      genreFilters.appendChild(all);
+
+      genres.forEach(genre => {
+        const btn = document.createElement('button');
+        btn.textContent = genre.name;
+        btn.className = 'genre-btn';
+        btn.addEventListener('click', () => selectGenre(genre.id, btn));
+        genreFilters.appendChild(btn);
+      });
+    }
+
+    function selectGenre(genreId, btn) {
+      activeGenreId = genreId;
+      searchInput.value = '';
+      genreFilters.querySelectorAll('.genre-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      loadMovies();
+    }
+
+    async function loadMovies() {
+      const thisSearch = ++currentSearch;
+      grid.innerHTML = '<p class="empty-state">Loading...</p>';
+      try {
+        let movies;
+        if (activeGenreId) {
+          movies = await fetchMoviesByGenre(activeGenreId);
+        } else {
+          const [page1, page2] = await Promise.all([
+            fetchPopularMovies(1),
+            fetchPopularMovies(2)
+          ]);
+          movies = [...page1, ...page2];
+        }
+        if (thisSearch !== currentSearch) return;
+        renderMovies(movies, grid, genres);
+      } catch {
+        if (thisSearch !== currentSearch) return;
+        grid.innerHTML = '<p class="empty-state">Failed to load movies. Please try again.</p>';
+      }
+    }
+
+    async function init() {
+      grid.innerHTML = '<p class="empty-state">Loading...</p>';
+      const [page1, page2, fetchedGenres] = await Promise.all([
+        fetchPopularMovies(1),
+        fetchPopularMovies(2),
+        fetchGenres()
+      ]);
+      genres = fetchedGenres;
+      renderGenreButtons();
+      renderMovies([...page1, ...page2], grid, genres);
+    }
+
+    searchInput.addEventListener('input', () => {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(async () => {
+        const query = searchInput.value.trim();
+        activeGenreId = null;
+        genreFilters.querySelectorAll('.genre-btn').forEach(b => b.classList.remove('active'));
+        const allBtn = genreFilters.querySelector('.genre-btn');
+        if (allBtn) allBtn.classList.add('active');
+        const thisSearch = ++currentSearch;
+        grid.innerHTML = '<p class="empty-state">Loading...</p>';
+        try {
+          let movies;
+          if (query) {
+            movies = await searchMovies(query);
+          } else {
+            const [page1, page2] = await Promise.all([fetchPopularMovies(1), fetchPopularMovies(2)]);
+            movies = [...page1, ...page2];
+          }
+          if (thisSearch !== currentSearch) return;
+          renderMovies(movies, grid, genres);
+        } catch {
+          if (thisSearch !== currentSearch) return;
+          grid.innerHTML = '<p class="empty-state">Failed to load movies. Please try again.</p>';
+        }
+      }, 400);
+    });
+
+    init().catch(() => {
+      grid.innerHTML = '<p class="empty-state">Failed to load movies. Please try again.</p>';
+    });
+  </script>
+</body>
+</html>
