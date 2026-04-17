@@ -1,6 +1,6 @@
 // modal.js — movie detail modal
 
-import { IMG_BASE } from './api.js';
+import { IMG_BASE, fetchMovieVideos } from './api.js';
 import {
   getReview, saveReview,
   isFavorite, addFavorite, removeFavorite,
@@ -40,6 +40,13 @@ modal.innerHTML = `
         </div>
       </div>
     </div>
+    <div class="modal-trailer" hidden>
+      <button class="btn-watch-trailer">&#9654; Watch Trailer</button>
+      <div class="trailer-embed" hidden>
+        <iframe class="trailer-iframe" frameborder="0" allowfullscreen
+          allow="autoplay; encrypted-media"></iframe>
+      </div>
+    </div>
   </div>
 `;
 document.body.appendChild(modal);
@@ -55,9 +62,21 @@ const saveBtn       = modal.querySelector('.btn-save-review');
 const savedMsg      = modal.querySelector('.review-saved-msg');
 const favBtn        = modal.querySelector('.modal-btn-favorite');
 const watchBtn      = modal.querySelector('.modal-btn-watched');
+const trailerSection = modal.querySelector('.modal-trailer');
+const trailerBtn     = modal.querySelector('.btn-watch-trailer');
+const trailerEmbed   = modal.querySelector('.trailer-embed');
+const trailerIframe  = modal.querySelector('.trailer-iframe');
 
 let currentMovie   = null;
 let selectedRating = 0;
+let pendingTrailerKey = null;
+
+// Trailer toggle — set src here so the iframe only loads when the user asks
+trailerBtn.addEventListener('click', () => {
+  if (pendingTrailerKey) trailerIframe.src = `https://www.youtube.com/embed/${pendingTrailerKey}?autoplay=1`;
+  trailerEmbed.hidden = false;
+  trailerBtn.hidden = true;
+});
 
 // Highlight stars up to the given value
 function setStars(value) {
@@ -115,6 +134,25 @@ saveBtn.addEventListener('click', () => {
 export function openModal(movie, genres = []) {
   currentMovie = movie;
 
+  // Reset trailer state
+  pendingTrailerKey = null;
+  trailerSection.hidden = true;
+  trailerEmbed.hidden = true;
+  trailerBtn.hidden = false;
+  trailerIframe.src = '';
+
+  // Fetch trailer in background — guard against stale responses
+  const fetchedForId = movie.id;
+  fetchMovieVideos(movie.id).then(videos => {
+    if (currentMovie?.id !== fetchedForId) return;
+    const trailer = videos.find(v => v.site === 'YouTube' && v.type === 'Trailer')
+      || videos.find(v => v.site === 'YouTube');
+    if (trailer) {
+      pendingTrailerKey = trailer.key;
+      trailerSection.hidden = false;
+    }
+  }).catch(() => {});
+
   favBtn.classList.toggle('active', isFavorite(movie.id));
   watchBtn.classList.toggle('active', isWatched(movie.id));
 
@@ -154,6 +192,11 @@ export function openModal(movie, genres = []) {
 export function closeModal() {
   modal.classList.remove('open');
   document.body.style.overflow = '';
+  pendingTrailerKey = null;
+  trailerIframe.src = '';
+  trailerSection.hidden = true;
+  trailerEmbed.hidden = true;
+  trailerBtn.hidden = false;
 }
 
 // Close on backdrop click

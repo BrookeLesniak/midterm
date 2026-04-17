@@ -16,6 +16,10 @@
       <li><a href="pages/favorites.html">Favorites</a></li>
       <li><a href="pages/watched.html">Watched</a></li>
     </ul>
+    <div class="nav-user">
+      <span class="nav-username"></span>
+      <button class="nav-logout">Log out</button>
+    </div>
     <button class="nav-toggle" aria-label="Toggle menu">&#9776;</button>
   </nav>
 
@@ -33,5 +37,9 @@
   </footer>
 
   <script src="js/app.js"></script>
+  <script type="module">
+    import { initAuthUI } from './js/auth-ui.js';
+    initAuthUI('pages/login.html');
+  </script>
 </body>
 </html>

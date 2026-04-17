@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Create Account — Reelify</title>
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="../index.html" class="nav-logo">Reelify</a>
+  </nav>
+
+  <main class="auth-page">
+    <div class="auth-card">
+      <h1>Create account</h1>
+      <p class="auth-subtitle">Join Reelify and start tracking movies</p>
+
+      <p class="form-error" id="error-msg" hidden></p>
+
+      <form class="auth-form" id="signup-form" novalidate>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="firstName">First Name</label>
+            <input type="text" id="firstName" name="firstName" placeholder="Jane"
+              required autocomplete="given-name" />
+          </div>
+          <div class="form-group">
+            <label for="lastName">Last Name</label>
+            <input type="text" id="lastName" name="lastName" placeholder="Doe"
+              required autocomplete="family-name" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" placeholder="you@example.com"
+            required autocomplete="email" />
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" placeholder="••••••••"
+            required autocomplete="new-password" />
+        </div>
+        <div class="form-group">
+          <label for="confirmPassword">Confirm Password</label>
+          <input type="password" id="confirmPassword" name="confirmPassword" placeholder="••••••••"
+            required autocomplete="new-password" />
+        </div>
+        <button type="submit" class="btn-auth-submit" id="submit-btn">Create Account</button>
+      </form>
+
+      <p class="auth-switch">Already have an account? <a href="login.html">Log in</a></p>
+    </div>
+  </main>
+
+  <script type="module">
+    import { auth, createUserWithEmailAndPassword, updateProfile, signOut, onAuthStateChanged } from '../js/firebase.js';
+
+    // Flag set to true while account creation is in progress so the
+    // onAuthStateChanged listener doesn't redirect mid-signup.
+    let signingUp = false;
+
+    // Already signed in → skip signup page
+    onAuthStateChanged(auth, (user) => {
+      if (user && !signingUp) window.location.href = 'browse.html';
+    });
+
+    function friendlyError(code) {
+      switch (code) {
+        case 'auth/email-already-in-use': return 'An account with this email already exists.';
+        case 'auth/invalid-email':        return 'Please enter a valid email address.';
+        case 'auth/weak-password':        return 'Password must be at least 6 characters.';
+        default:                          return 'Something went wrong. Please try again.';
+      }
+    }
+
+    const form      = document.getElementById('signup-form');
+    const errorMsg  = document.getElementById('error-msg');
+    const submitBtn = document.getElementById('submit-btn');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorMsg.hidden = true;
+
+      const firstName       = form.firstName.value.trim();
+      const lastName        = form.lastName.value.trim();
+      const email           = form.email.value.trim();
+      const password        = form.password.value;
+      const confirmPassword = form.confirmPassword.value;
+
+      if (!firstName || !lastName) {
+        errorMsg.textContent = 'Please enter your first and last name.';
+        errorMsg.hidden = false;
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        errorMsg.textContent = 'Passwords do not match.';
+        errorMsg.hidden = false;
+        return;
+      }
+
+      signingUp = true;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Creating account…';
+
+      try {
+        const { user } = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(user, { displayName: `${firstName} ${lastName}` });
+        await signOut(auth);
+        window.location.href = 'login.html?created=1';
+      } catch (err) {
+        signingUp = false;
+        errorMsg.textContent = friendlyError(err.code);
+        errorMsg.hidden = false;
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Create Account';
+      }
+    });
+  </script>
+</body>
+</html>

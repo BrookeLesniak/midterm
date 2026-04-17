@@ -16,6 +16,10 @@
       <li><a href="favorites.html">Favorites</a></li>
       <li><a href="watched.html">Watched</a></li>
     </ul>
+    <div class="nav-user">
+      <span class="nav-username"></span>
+      <button class="nav-logout">Log out</button>
+    </div>
     <button class="nav-toggle" aria-label="Toggle menu">&#9776;</button>
   </nav>
 
@@ -38,6 +42,9 @@
   <script type="module">
     import { getWatched, isWatched } from '../js/storage.js';
     import { renderMovies } from '../js/movies.js';
+    import { initAuthUI } from '../js/auth-ui.js';
+
+    await initAuthUI('login.html');
 
     const grid = document.getElementById('movie-grid');
 

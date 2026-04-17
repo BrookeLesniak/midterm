@@ -41,3 +41,9 @@ export async function fetchGenres() {
   const data = await apiFetch('/genre/movie/list');
   return data.genres;
 }
+
+// Fetch videos (trailers, teasers, etc.) for a movie
+export async function fetchMovieVideos(movieId) {
+  const data = await apiFetch(`/movie/${movieId}/videos`);
+  return data.results;
+}
