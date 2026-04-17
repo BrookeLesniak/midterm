@@ -4,6 +4,8 @@
 
 For my midterm project I am creating a web app that tracks movies using HTML, CSS, and Javascript. Its MVP features would be: Browse a collection of movies, save favorites to localStorage, mark as watched, rate/review, and filter by genre. Other features that I would like to implement later on would be: a User profile with editable info, advanced filtering, user authentication, and a cloud database.
 
+For this exercise I implemented an API from The Movie Database (TMDB) in order to get the data for the movie posters, descriptions, and trailers. I also used firebase to authenticate users and hold a lot of the backend information for my users. These features are already implemented throughout the site and the user doesn't need to do anything special to use them.
+
 ---
 
 ## Features
