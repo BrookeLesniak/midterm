@@ -2,10 +2,11 @@
 
 import { IMG_BASE, fetchMovieVideos } from './api.js';
 import {
-  getReview, saveReview,
+  getReview, saveReview, getMovieReviews,
   isFavorite, addFavorite, removeFavorite,
   isWatched, addWatched, removeWatched
 } from './storage.js';
+import { auth } from './firebase.js';
 
 // Create modal element and append to body once
 const modal = document.createElement('div');
@@ -37,6 +38,10 @@ modal.innerHTML = `
           <textarea class="review-text" placeholder="Write a review..." rows="3"></textarea>
           <button class="btn-save-review">Save Review</button>
           <p class="review-saved-msg" hidden>Review saved!</p>
+        </div>
+        <div class="community-reviews">
+          <p class="review-label">Community Reviews</p>
+          <div class="community-reviews-list"></div>
         </div>
       </div>
     </div>
@@ -70,6 +75,39 @@ const trailerIframe  = modal.querySelector('.trailer-iframe');
 let currentMovie   = null;
 let selectedRating = 0;
 let pendingTrailerKey = null;
+
+const communityList = modal.querySelector('.community-reviews-list');
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+async function loadCommunityReviews(movieId) {
+  communityList.innerHTML = '<p class="community-reviews-empty">Loading...</p>';
+  try {
+    const reviews = await getMovieReviews(movieId);
+    const others = reviews.filter(r => r.uid !== auth.currentUser?.uid && (r.rating > 0 || r.text));
+    if (!others.length) {
+      communityList.innerHTML = '<p class="community-reviews-empty">No reviews from other users yet.</p>';
+      return;
+    }
+    communityList.innerHTML = others.map(r => `
+      <div class="community-review-item">
+        <div class="community-review-header">
+          <span class="community-review-name">${escapeHtml(r.displayName)}</span>
+          <span class="community-review-stars">${'★'.repeat(r.rating || 0)}${'☆'.repeat(5 - (r.rating || 0))}</span>
+        </div>
+        ${r.text ? `<p class="community-review-text">${escapeHtml(r.text)}</p>` : ''}
+      </div>
+    `).join('');
+  } catch {
+    communityList.innerHTML = '<p class="community-reviews-empty">Could not load reviews.</p>';
+  }
+}
 
 // Trailer toggle — set src here so the iframe only loads when the user asks
 trailerBtn.addEventListener('click', () => {
@@ -129,6 +167,7 @@ saveBtn.addEventListener('click', () => {
   saveReview(currentMovie.id, { rating: selectedRating, text: reviewText.value.trim() });
   savedMsg.hidden = false;
   setTimeout(() => { savedMsg.hidden = true; }, 2000);
+  loadCommunityReviews(currentMovie.id);
 });
 
 export function openModal(movie, genres = []) {
@@ -184,6 +223,7 @@ export function openModal(movie, genres = []) {
 
   setStars(selectedRating);
   savedMsg.hidden = true;
+  loadCommunityReviews(movie.id);
 
   modal.classList.add('open');
   document.body.style.overflow = 'hidden';

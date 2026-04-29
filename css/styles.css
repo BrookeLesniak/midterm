@@ -495,6 +495,63 @@ a {
 }
 
 /* ===========================
+   Community Reviews
+=========================== */
+.community-reviews {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.community-reviews-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.community-review-item {
+  background-color: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.65rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.community-review-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.community-review-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.community-review-stars {
+  font-size: 0.9rem;
+  color: #f59e0b;
+  letter-spacing: 1px;
+}
+
+.community-review-text {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.community-reviews-empty {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* ===========================
    Trailer
 =========================== */
 .modal-trailer {

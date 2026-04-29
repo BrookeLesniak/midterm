@@ -9,7 +9,7 @@ import {
   onAuthStateChanged,
   updateProfile,
 } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js';
-import { getFirestore } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
+import { getFirestore, collection, getDocs } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBpbLBXTWlpUQnCaFXBX9q0W9AlWQgss6Q",
@@ -23,6 +23,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+export { collection, getDocs };
 export {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,

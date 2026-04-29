@@ -1,7 +1,7 @@
 // storage.js — Firestore-backed storage with synchronous in-memory cache
 
-import { db } from './firebase.js';
-import { doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
+import { auth, db } from './firebase.js';
+import { doc, getDoc, setDoc, collection, getDocs } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
 
 let uid = null;
 let cache = { favorites: [], watched: [], reviews: {} };
@@ -73,6 +73,17 @@ export function getReview(movieId) { return cache.reviews[movieId] ?? null; }
 export function saveReview(movieId, { rating, text }) {
   cache.reviews[movieId] = { rating, text };
   persist();
+  const user = auth.currentUser;
+  if (user) {
+    setDoc(doc(db, 'movieReviews', String(movieId), 'reviews', user.uid), {
+      rating, text, displayName: user.displayName || user.email, uid: user.uid
+    }).catch(console.error);
+  }
+}
+
+export async function getMovieReviews(movieId) {
+  const snap = await getDocs(collection(db, 'movieReviews', String(movieId), 'reviews'));
+  return snap.docs.map(d => d.data());
 }
 
 export function removeReview(movieId) {
