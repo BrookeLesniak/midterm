@@ -90,6 +90,7 @@ async function loadCommunityReviews(movieId) {
   communityList.innerHTML = '<p class="community-reviews-empty">Loading...</p>';
   try {
     const reviews = await getMovieReviews(movieId);
+    if (currentMovie?.id !== movieId) return;
     const others = reviews.filter(r => r.uid !== auth.currentUser?.uid && (r.rating > 0 || r.text));
     if (!others.length) {
       communityList.innerHTML = '<p class="community-reviews-empty">No reviews from other users yet.</p>';
@@ -105,6 +106,7 @@ async function loadCommunityReviews(movieId) {
       </div>
     `).join('');
   } catch {
+    if (currentMovie?.id !== movieId) return;
     communityList.innerHTML = '<p class="community-reviews-empty">Could not load reviews.</p>';
   }
 }
